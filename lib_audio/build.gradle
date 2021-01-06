@@ -1,0 +1,99 @@
+apply plugin: 'com.android.library'
+//引入maven插件
+apply plugin: 'maven'
+//引入greenDao
+apply plugin: 'org.greenrobot.greendao'
+//引入ARouter
+apply plugin: 'com.alibaba.arouter'
+
+//定义变量
+def pomName = this.getName()
+def pomVersion = '1.0.0-SNAPSHOT'
+def pomDescription = 'the audio library for all project'
+
+
+android {
+    compileSdkVersion this.rootProject.android.compileSdkVersion
+    buildToolsVersion "30.0.2"
+
+
+    defaultConfig {
+        minSdkVersion this.rootProject.android.minSdkVersion
+        targetSdkVersion this.rootProject.android.targetSdkVersion
+        versionCode this.rootProject.android.versionCode
+        versionName this.rootProject.android.versionName
+        //ARouter配置
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [AROUTER_MODULE_NAME: project.getName(), AROUTER_GENERATE_DOC: "enable"]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    //占位主工程android原生库
+    compileOnly this.rootProject.depsLibs.appcompat
+    compileOnly this.rootProject.depsLibs.design
+    compileOnly this.rootProject.depsLibs.recyclerview
+
+    //占位主工程的greenDao
+    compileOnly this.rootProject.depsLibs.greendao
+    //占位主工程的eventBus
+    compileOnly this.rootProject.depsLibs.eventbus
+    //占位主工程的rxjava
+    compileOnly this.rootProject.depsLibs.rxjava
+    //占位主工程arouter库
+    compileOnly(this.rootProject.depsLibs.arouterapi) {
+        exclude group: 'com.android.support'
+    }
+    annotationProcessor this.rootProject.depsLibs.aroutercompiler
+
+    //占位主工程自己的源码库
+    compileOnly project(path: ':lib_common_ui')
+    compileOnly project(path: ':lib_image_loader')
+    compileOnly project(path: ':lib_share')
+    compileOnly project(path: ':lib_base')
+}
+
+greendao {
+    //其它配置保持默认,有需要再研究
+    schemaVersion 1 //数据库版本号
+    daoPackage 'com.tcy.lib_audio.mediaplayer.db' //dao,master类所在包
+}
+
+//配置uploadArchives 来进行上传工作
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: NEXUS_REPOSITORY_URL) {
+                authentication(userName: NEXUS_USERNAME,
+                        password: NEXUS_PASSWORD)
+            }
+            pom.project {
+                name pomName
+                version pomVersion
+                description pomDescription
+                artifactId pomVersion
+                groupId POM_GROUPID
+                packaging POM_PACKAGING
+            }
+        }
+    }
+}
